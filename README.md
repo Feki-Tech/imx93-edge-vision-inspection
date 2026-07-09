@@ -50,9 +50,10 @@ python3 -m app.main --backend npu --source csi
 ## Project status / roadmap
 
 - [x] Repository scaffold, pipeline skeleton, CI
-- [ ] Dataset + training script (transfer learning on defect dataset, e.g. MVTec AD style)
-- [ ] INT8 post-training quantization + Vela compilation
-- [ ] GStreamer camera capture on i.MX93
+- [x] Training script (MobileNetV2 transfer learning) — see [docs/training.md](docs/training.md)
+- [x] INT8 post-training quantization + Vela compilation scripts
+- [ ] Trained model + published accuracy numbers
+- [ ] GStreamer camera capture validated on i.MX93
 - [ ] NPU vs CPU latency benchmark (documented results)
 - [ ] MQTT telemetry + minimal live dashboard
 - [ ] Demo video
@@ -61,10 +62,16 @@ python3 -m app.main --backend npu --source csi
 
 ```
 app/        Inference application (runs on target and host)
-models/     Training, quantization and Vela export scripts
+models/     Training (train.py), quantization (quantize.py) and Vela export scripts
 tests/      Unit tests (run in CI, no hardware required)
-docs/       Architecture and benchmark notes
+docs/       Architecture, training and deployment guides
 ```
+
+## Documentation
+
+- [Architecture](docs/architecture.md) — components, design decisions, model pipeline
+- [Training guide](docs/training.md) — dataset, transfer learning, INT8 quantization, Vela
+- [i.MX93 deployment](docs/deployment-imx93.md) — BSP requirements, running on the NPU, troubleshooting
 
 ## License
 
