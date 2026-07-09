@@ -1,0 +1,9 @@
+[project]
+name = "imx93-edge-vision-inspection"
+version = "0.1.0"
+description = "Edge AI visual defect detection on NXP i.MX93 (Ethos-U65 NPU)"
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
