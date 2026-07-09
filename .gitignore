@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.coverage
+
+# Models & data (tracked via releases / DVC later)
+*.tflite
+!models/samples/*.tflite
+data/
+datasets/
+
+.idea/
+.vscode/
+*.log
