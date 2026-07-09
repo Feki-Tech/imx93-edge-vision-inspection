@@ -29,3 +29,11 @@ def test_decider_debounce():
     assert d.update(hit) is False       # first hit: not yet
     assert d.update(hit) is True        # second consecutive hit: alert
     assert d.update(miss) is False      # reset by good frame
+
+
+def test_telemetry_noop_without_broker():
+    from app.telemetry import Telemetry
+
+    t = Telemetry(host=None)
+    t.publish(0, InferenceResult("good", 0.9, 1.0), alert=False)  # must not raise
+    t.close()

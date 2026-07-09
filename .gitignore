@@ -6,9 +6,11 @@ venv/
 .pytest_cache/
 .coverage
 
-# Models & data (tracked via releases / DVC later)
+# Models & data (tracked exceptions below)
 *.tflite
-!models/samples/*.tflite
+!models/defect_int8.tflite
+!models/defect_int8_vela.tflite
+models/saved_model/
 data/
 datasets/
 

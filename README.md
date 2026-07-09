@@ -51,20 +51,22 @@ python3 -m app.main --backend npu --source csi
 
 - [x] Repository scaffold, pipeline skeleton, CI
 - [x] Training script (MobileNetV2 transfer learning) — see [docs/training.md](docs/training.md)
-- [x] INT8 post-training quantization + Vela compilation scripts
-- [ ] Trained model + published accuracy numbers
+- [x] INT8 post-training quantization + Vela compilation (100 % NPU residency)
+- [x] Trained INT8 model committed — 100 % val accuracy, no quantization loss ([docs/benchmarks.md](docs/benchmarks.md))
+- [x] MQTT telemetry + live web dashboard ([docs/telemetry.md](docs/telemetry.md))
 - [ ] GStreamer camera capture validated on i.MX93
-- [ ] NPU vs CPU latency benchmark (documented results)
-- [ ] MQTT telemetry + minimal live dashboard
+- [ ] NPU vs CPU latency measured on the board ([docs/benchmarks.md](docs/benchmarks.md) has host numbers)
+- [ ] Real production dataset (current model is trained on synthetic surfaces)
 - [ ] Demo video
 
 ## Repository layout
 
 ```
 app/        Inference application (runs on target and host)
-models/     Training (train.py), quantization (quantize.py) and Vela export scripts
+models/     Training, quantization, Vela export, benchmark + committed INT8 models
+dashboard/  Live web dashboard (MQTT over WebSockets, zero build step)
 tests/      Unit tests (run in CI, no hardware required)
-docs/       Architecture, training and deployment guides
+docs/       Architecture, training, deployment, telemetry and benchmark docs
 ```
 
 ## Documentation
@@ -72,6 +74,8 @@ docs/       Architecture, training and deployment guides
 - [Architecture](docs/architecture.md) — components, design decisions, model pipeline
 - [Training guide](docs/training.md) — dataset, transfer learning, INT8 quantization, Vela
 - [i.MX93 deployment](docs/deployment-imx93.md) — BSP requirements, running on the NPU, troubleshooting
+- [Telemetry & dashboard](docs/telemetry.md) — MQTT topics, broker setup, live dashboard
+- [Benchmarks](docs/benchmarks.md) — accuracy, Vela report, latency results
 
 ## License
 

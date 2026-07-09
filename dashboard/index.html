@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Edge Vision Inspection — Live Dashboard</title>
+<script src="https://unpkg.com/mqtt@5/dist/mqtt.min.js"></script>
+<style>
+  :root { --bg:#0d1117; --card:#161b22; --border:#30363d; --text:#e6edf3;
+          --good:#3fb950; --bad:#f85149; --muted:#8b949e; }
+  body { margin:0; font-family:system-ui,sans-serif; background:var(--bg); color:var(--text); }
+  header { padding:16px 24px; border-bottom:1px solid var(--border); display:flex; gap:16px; align-items:center; }
+  header h1 { font-size:18px; margin:0; }
+  #status { font-size:13px; color:var(--muted); }
+  main { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; padding:24px; }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:16px; }
+  .card .label { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
+  .card .value { font-size:32px; font-weight:600; margin-top:6px; }
+  #state.good { color:var(--good); } #state.defect { color:var(--bad); }
+  #log { margin:0 24px 24px; background:var(--card); border:1px solid var(--border);
+         border-radius:8px; padding:12px 16px; font:12px/1.7 ui-monospace,monospace;
+         height:280px; overflow-y:auto; }
+  .alert { color:var(--bad); font-weight:600; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🔍 Edge Vision Inspection</h1>
+  <span id="status">connecting…</span>
+</header>
+<main>
+  <div class="card"><div class="label">Current state</div><div class="value" id="state">—</div></div>
+  <div class="card"><div class="label">Frames</div><div class="value" id="frames">0</div></div>
+  <div class="card"><div class="label">Defect alerts</div><div class="value" id="alerts">0</div></div>
+  <div class="card"><div class="label">Latency (ms)</div><div class="value" id="latency">—</div></div>
+  <div class="card"><div class="label">Confidence</div><div class="value" id="score">—</div></div>
+</main>
+<pre id="log"></pre>
+<script>
+const params = new URLSearchParams(location.search);
+const broker = params.get("broker") || "ws://localhost:9001";
+const station = params.get("station") || "station1";
+let frames = 0, alerts = 0;
+
+const el = id => document.getElementById(id);
+const client = mqtt.connect(broker);
+
+client.on("connect", () => {
+  el("status").textContent = `connected to ${broker} · ${station}`;
+  client.subscribe(`inspection/${station}/result`);
+  client.subscribe(`inspection/${station}/alert`);
+});
+client.on("error", e => el("status").textContent = "error: " + e.message);
+
+client.on("message", (topic, msg) => {
+  const d = JSON.parse(msg.toString());
+  if (topic.endsWith("/alert")) {
+    alerts++; el("alerts").textContent = alerts;
+    logLine(`⚠ ALERT frame ${d.frame} score=${d.score}`, true);
+    return;
+  }
+  frames++;
+  el("frames").textContent = frames;
+  el("state").textContent = d.label;
+  el("state").className = "value " + d.label;
+  el("latency").textContent = d.latency_ms.toFixed(1);
+  el("score").textContent = (d.score * 100).toFixed(0) + "%";
+  logLine(`frame ${String(d.frame).padStart(4,"0")}  ${d.label.padEnd(7)} score=${d.score.toFixed(2)}  ${d.latency_ms.toFixed(1)} ms`);
+});
+
+function logLine(text, isAlert = false) {
+  const log = el("log");
+  const line = document.createElement("div");
+  if (isAlert) line.className = "alert";
+  line.textContent = new Date().toLocaleTimeString() + "  " + text;
+  log.appendChild(line);
+  while (log.childElementCount > 300) log.firstChild.remove();
+  log.scrollTop = log.scrollHeight;
+}
+</script>
+</body>
+</html>

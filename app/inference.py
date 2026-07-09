@@ -41,7 +41,13 @@ class TFLiteEngine:
     """Runs a quantized TFLite model on CPU, or on the Ethos-U65 NPU via delegate."""
 
     def __init__(self, model_path: str, use_npu: bool = False):
-        from tflite_runtime.interpreter import Interpreter, load_delegate  # type: ignore
+        try:
+            from tflite_runtime.interpreter import Interpreter, load_delegate  # type: ignore
+        except ImportError:  # host PC with full TensorFlow instead of tflite_runtime
+            import tensorflow as tf  # type: ignore
+
+            Interpreter = tf.lite.Interpreter
+            load_delegate = tf.lite.experimental.load_delegate
 
         delegates = []
         if use_npu:
@@ -53,11 +59,12 @@ class TFLiteEngine:
         self.name = "npu" if use_npu else "cpu"
 
     def infer(self, frame: np.ndarray) -> InferenceResult:
+        # Model expects raw 0-255 pixels (preprocessing is inside the graph)
         scale, zero_point = self.input.get("quantization", (0.0, 0))
         if scale:  # INT8 quantized input
-            data = (frame / 255.0 / scale + zero_point).astype(self.input["dtype"])
+            data = np.clip(frame / scale + zero_point, -128, 127).astype(self.input["dtype"])
         else:
-            data = (frame / 255.0).astype(np.float32)
+            data = frame.astype(np.float32)
         self.interpreter.set_tensor(self.input["index"], data[None, ...])
 
         t0 = time.perf_counter()
@@ -72,7 +79,11 @@ class TFLiteEngine:
         return InferenceResult(LABELS[idx], float(out[idx]), latency)
 
 
-def make_engine(backend: str, model_path: str = "models/defect_int8_vela.tflite"):
+def make_engine(backend: str, model_path: str | None = None):
+    if model_path is None:
+        # Vela-compiled model only executes on the NPU; plain INT8 model elsewhere
+        model_path = ("models/defect_int8_vela.tflite" if backend == "npu"
+                      else "models/defect_int8.tflite")
     if backend in ("cpu", "npu") and Path(model_path).exists():
         return TFLiteEngine(model_path, use_npu=backend == "npu")
     return HeuristicEngine()
